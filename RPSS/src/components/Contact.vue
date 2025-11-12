@@ -40,9 +40,16 @@
           <div class="contact-form-card">
             <h3>Оставьте заявку</h3>
             <p>Мы перезвоним вам в течение рабочего дня</p>
-            <div :class="['form-message', messageType]" v-if="showMessage">
+
+            <!-- Сообщения о статусе отправки -->
+            <div
+              v-if="showMessage"
+              class="form-message"
+              :class="messageType"
+            >
               {{ messageText }}
             </div>
+
             <form @submit.prevent="submitForm">
               <div class="form-group">
                 <input
@@ -51,6 +58,7 @@
                   v-model="form.name"
                   placeholder=" "
                   required
+                  :disabled="loading"
                 >
                 <label for="name">Ваше имя *</label>
                 <div class="error-message" v-if="errors.name">{{ errors.name }}</div>
@@ -63,6 +71,7 @@
                   v-model="form.phone"
                   placeholder=" "
                   required
+                  :disabled="loading"
                 >
                 <label for="phone">Ваш телефон *</label>
                 <div class="error-message" v-if="errors.phone">{{ errors.phone }}</div>
@@ -74,13 +83,19 @@
                   id="email"
                   v-model="form.email"
                   placeholder=" "
+                  :disabled="loading"
                 >
                 <label for="email">Ваш e-mail</label>
                 <div class="error-message" v-if="errors.email">{{ errors.email }}</div>
               </div>
 
               <div class="form-group">
-                <select id="object_type" v-model="form.object_type" required>
+                <select
+                  id="object_type"
+                  v-model="form.object_type"
+                  required
+                  :disabled="loading"
+                >
                   <option value="" disabled selected></option>
                   <option value="apartment">Квартира</option>
                   <option value="house">Частный дом</option>
@@ -98,13 +113,25 @@
                   v-model="form.message"
                   placeholder=" "
                   rows="4"
+                  :disabled="loading"
                 ></textarea>
                 <label for="message">Сообщение</label>
               </div>
 
-              <button type="submit" class="btn-form" :disabled="loading">
-                <i class="fas fa-paper-plane"></i>
-                {{ loading ? 'Отправка...' : 'Отправить заявку' }}
+              <button
+                type="submit"
+                class="btn-form"
+                :disabled="loading"
+                :class="{ 'loading': loading }"
+              >
+                <template v-if="loading">
+                  <i class="fas fa-spinner fa-spin"></i>
+                  Отправка...
+                </template>
+                <template v-else>
+                  <i class="fas fa-paper-plane"></i>
+                  Отправить заявку
+                </template>
               </button>
             </form>
           </div>
@@ -134,7 +161,12 @@ export default {
     const messageText = ref('')
     const messageType = ref('')
 
+    // URL сервера - измените на ваш домен после деплоя
+   // В компоненте Contact.vue
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000'
+
     const validateEmail = (email) => {
+      if (!email) return true // email не обязателен
       const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
       return re.test(email)
     }
@@ -146,29 +178,29 @@ export default {
     }
 
     const validateForm = () => {
-      // Clear previous errors
+      // Очищаем предыдущие ошибки
       Object.keys(errors).forEach(key => delete errors[key])
 
-      // Name validation
+      // Валидация имени
       if (!form.name.trim()) {
         errors.name = 'Пожалуйста, введите ваше имя'
       } else if (form.name.trim().length < 2) {
         errors.name = 'Имя должно содержать минимум 2 символа'
       }
 
-      // Phone validation
+      // Валидация телефона
       if (!form.phone.trim()) {
         errors.phone = 'Пожалуйста, введите номер телефона'
       } else if (!validatePhone(form.phone)) {
         errors.phone = 'Пожалуйста, введите корректный номер телефона'
       }
 
-      // Email validation
+      // Валидация email
       if (form.email && !validateEmail(form.email)) {
         errors.email = 'Пожалуйста, введите корректный email'
       }
 
-      // Object type validation
+      // Валидация типа объекта
       if (!form.object_type) {
         errors.object_type = 'Пожалуйста, выберите тип объекта'
       }
@@ -195,20 +227,37 @@ export default {
       loading.value = true
 
       try {
-        // Simulate API call
-        await new Promise(resolve => setTimeout(resolve, 2000))
-
-        // Here you would normally send data to your backend
-        console.log('Form data:', form)
-
-        showNotification('Заявка успешно отправлена! Мы свяжемся с вами в ближайшее время.', 'success')
-
-        // Reset form
-        Object.keys(form).forEach(key => {
-          form[key] = ''
+        const response = await fetch(`${API_URL}/api/send-message`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            name: form.name.trim(),
+            phone: form.phone.trim(),
+            email: form.email.trim(),
+            service: form.object_type, // переименовываем для сервера
+            message: form.message.trim(),
+            object_type: form.object_type // дублируем для ясности
+          })
         })
+
+        const result = await response.json()
+
+        if (result.success) {
+          showNotification('Заявка успешно отправлена! Мы свяжемся с вами в ближайшее время.', 'success')
+
+          // Сбрасываем форму
+          Object.keys(form).forEach(key => {
+            form[key] = ''
+          })
+        } else {
+          showNotification(result.message || 'Ошибка при отправке заявки', 'error')
+        }
+
       } catch (error) {
-        showNotification('Ошибка при отправке заявки. Пожалуйста, попробуйте еще раз.', 'error')
+        console.error('Ошибка отправки:', error)
+        showNotification('Ошибка соединения с сервером. Пожалуйста, попробуйте еще раз или позвоните нам.', 'error')
       } finally {
         loading.value = false
       }
@@ -226,3 +275,41 @@ export default {
   }
 }
 </script>
+
+<style scoped>
+/* Дополнительные стили для состояния загрузки */
+.btn-form.loading {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.btn-form:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.fa-spinner {
+  margin-right: 8px;
+}
+
+.form-message {
+  padding: 12px 15px;
+  margin: 15px 0;
+  border-radius: 8px;
+  text-align: center;
+  font-weight: 500;
+  font-size: 0.9rem;
+}
+
+.form-message.success {
+  background: #d4edda;
+  color: #155724;
+  border: 1px solid #c3e6cb;
+}
+
+.form-message.error {
+  background: #f8d7da;
+  color: #721c24;
+  border: 1px solid #f5c6cb;
+}
+</style>
