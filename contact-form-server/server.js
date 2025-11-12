@@ -1,16 +1,16 @@
-const express = require('express');
-const cors = require('cors');
-const nodemailer = require('nodemailer');
+import express, { json } from 'express';
+import cors from 'cors';
+import { createTransporter } from 'nodemailer';
 require('dotenv').config();
 
 const app = express();
 
 // Middleware
 app.use(cors());
-app.use(express.json());
+app.use(json());
 
 // Настройка почтового транспорта
-const transporter = nodemailer.createTransporter({
+const transporter = createTransporter({
   host: process.env.SMTP_HOST || 'smtp.yandex.ru',
   port: process.env.SMTP_PORT || 587,
   secure: false,
