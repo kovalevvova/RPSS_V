@@ -96,7 +96,7 @@
                   required
                   :disabled="loading"
                 >
-                  <option value="" disabled selected></option>
+                  <option value="" disabled selected>Выберите тип объекта</option>
                   <option value="apartment">Квартира</option>
                   <option value="house">Частный дом</option>
                   <option value="office">Офис</option>
@@ -161,9 +161,10 @@ export default {
     const messageText = ref('')
     const messageType = ref('')
 
-    // URL сервера - измените на ваш домен после деплоя
-   // В компоненте Contact.vue
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000'
+    // URL для отправки заявки - ЗАМЕНИТЕ НА СВОЙ URL
+    const API_URL = 'http://localhost:8000' // Замените на URL где лежит PHP файл
+    // Для тестирования на localhost:
+    // const API_URL = 'http://localhost:8000'
 
     const validateEmail = (email) => {
       if (!email) return true // email не обязателен
@@ -227,7 +228,7 @@ const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000'
       loading.value = true
 
       try {
-        const response = await fetch(`${API_URL}/api/send-message`, {
+        const response = await fetch(`${API_URL}/send-mail.php`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -236,28 +237,27 @@ const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000'
             name: form.name.trim(),
             phone: form.phone.trim(),
             email: form.email.trim(),
-            service: form.object_type, // переименовываем для сервера
-            message: form.message.trim(),
-            object_type: form.object_type // дублируем для ясности
+            object_type: form.object_type,
+            message: form.message.trim()
           })
         })
 
         const result = await response.json()
 
         if (result.success) {
-          showNotification('Заявка успешно отправлена! Мы свяжемся с вами в ближайшее время.', 'success')
+          showNotification(result.message, 'success')
 
           // Сбрасываем форму
           Object.keys(form).forEach(key => {
             form[key] = ''
           })
         } else {
-          showNotification(result.message || 'Ошибка при отправке заявки', 'error')
+          showNotification(result.message, 'error')
         }
 
       } catch (error) {
         console.error('Ошибка отправки:', error)
-        showNotification('Ошибка соединения с сервером. Пожалуйста, попробуйте еще раз или позвоните нам.', 'error')
+        showNotification('Ошибка соединения с сервером. Пожалуйста, позвоните нам по телефону.', 'error')
       } finally {
         loading.value = false
       }
@@ -311,5 +311,175 @@ const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000'
   background: #f8d7da;
   color: #721c24;
   border: 1px solid #f5c6cb;
+}
+
+/* Стили для контактной информации */
+.contact-container {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 40px;
+}
+
+.contact-info {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.contact-card {
+  background: var(--bg-light);
+  padding: 25px;
+  border-radius: 12px;
+  border-left: 4px solid var(--primary);
+}
+
+.contact-card h3 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-dark);
+  margin-bottom: 12px;
+  font-size: 1.1rem;
+}
+
+.contact-card h3 i {
+  color: var(--primary);
+}
+
+.contact-card p, .contact-card a {
+  color: var(--text-light);
+  line-height: 1.5;
+  font-size: 0.9rem;
+}
+
+.contact-card a {
+  text-decoration: none;
+}
+
+.contact-card a:hover {
+  color: var(--primary);
+}
+
+.phones {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.contact-form-card {
+  background: var(--bg-white);
+  padding: 30px;
+  border-radius: 15px;
+  box-shadow: var(--shadow-lg);
+}
+
+.contact-form-card h3 {
+  font-size: 1.3rem;
+  margin-bottom: 8px;
+}
+
+.contact-form-card > p {
+  color: var(--text-light);
+  margin-bottom: 25px;
+  font-size: 0.9rem;
+}
+
+/* Стили формы */
+.form-group {
+  position: relative;
+  margin-bottom: 20px;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+  width: 100%;
+  padding: 12px 15px;
+  border: 2px solid var(--border);
+  border-radius: 8px;
+  font-size: 0.9rem;
+  background: var(--bg-white);
+  transition: all 0.3s ease;
+  font-family: inherit;
+  resize: vertical;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+  border-color: var(--primary);
+  outline: none;
+}
+
+.form-group label {
+  position: absolute;
+  top: 12px;
+  left: 15px;
+  background: var(--bg-white);
+  padding: 0 5px;
+  color: var(--text-light);
+  transition: all 0.3s ease;
+  pointer-events: none;
+  font-size: 0.9rem;
+}
+
+.form-group input:focus + label,
+.form-group select:focus + label,
+.form-group textarea:focus + label,
+.form-group input:not(:placeholder-shown) + label,
+.form-group select:not(:placeholder-shown) + label,
+.form-group textarea:not(:placeholder-shown) + label {
+  top: -8px;
+  font-size: 0.7rem;
+  color: var(--primary);
+}
+
+.form-group select {
+  appearance: none;
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 14px;
+  padding-right: 35px;
+}
+
+.form-group textarea {
+  min-height: 100px;
+}
+
+.error-message {
+  color: var(--primary);
+  font-size: 0.75rem;
+  margin-top: 5px;
+}
+
+.btn-form {
+  width: 100%;
+  padding: 14px 25px;
+  background: var(--gradient);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.btn-form:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(229, 57, 53, 0.4);
+}
+
+/* Адаптивность */
+@media screen and (min-width: 768px) {
+  .contact-container {
+    grid-template-columns: 1fr 1fr;
+    gap: 40px;
+  }
 }
 </style>
