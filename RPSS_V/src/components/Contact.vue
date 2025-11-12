@@ -162,7 +162,7 @@ export default {
     const messageType = ref('')
 
     // URL для отправки заявки - ЗАМЕНИТЕ НА СВОЙ URL
-    const API_URL = 'https://rpss-11.ru/contact-form' // Замените на URL где лежит PHP файл
+    const API_URL = 'https://rpss-11.ru/public_html/contact-form' // Замените на URL где лежит PHP файл
     // Для тестирования на localhost:
     // const API_URL = 'http://localhost:8000'
 
