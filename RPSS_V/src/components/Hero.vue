@@ -1,8 +1,24 @@
 <template>
   <section class="hero" id="home">
-    <div class="hero-background">
-      <div class="hero-overlay"></div>
+    <!-- Анимация дыма из труб -->
+    <div class="smoke-animation">
+      <div class="smoke smoke-1"></div>
+      <div class="smoke smoke-2"></div>
+      <div class="smoke smoke-3"></div>
+      <div class="smoke smoke-4"></div>
+
+      <div class="steam steam-1"></div>
+      <div class="steam steam-2"></div>
+
+      <div class="factory-lights">
+        <div class="light light-1"></div>
+        <div class="light light-2"></div>
+        <div class="light light-3"></div>
+        <div class="light light-4"></div>
+        <div class="light light-5"></div>
+      </div>
     </div>
+
     <div class="container">
       <div class="hero-content">
         <div class="hero-badge">
